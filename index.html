@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STACK - Advanced Code Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #5e35b1;
+            --primary-dark: #4527a0;
+            --secondary: #ff4081;
+            --dark: #121212;
+            --darker: #0a0a0a;
+            --gray: #2d2d2d;
+            --light-gray: #3d3d3d;
+            --light: #f5f5f5;
+            --error: #f44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Fira Code', monospace, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--dark);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo h1 {
+           font-family:Verdana, Geneva, Tahoma, sans-serif;
+            font-weight: 900;
+            font-size: 1.8rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            position: relative;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background-color: var(--light-gray);
+            position: relative;
+        }
+
+        .btn-info:hover .info-message {
+            display: block;
+        }
+
+        .btn-copilot {
+            background-color: #2d2d2d;
+            position: relative;
+        }
+
+        .btn-save {
+            background-color: var(--primary);
+        }
+
+        .btn-new {background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+
+        .btn-delete {
+            background-color: var(--error);
+        }
+
+        .info-message {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            width: 250px;
+            display: none;
+            z-index: 100;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 1rem;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .editor-container {
+            flex: 1;
+            min-width: 300px;
+            background-color: var(--dark);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-header {
+            background-color: var(--gray);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-header h2 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .editor-wrapper {
+            display: flex;
+            flex: 1;
+            position: relative;
+            background-color: #1e1e1e;
+        }
+
+        .line-numbers {
+            width: 40px;
+            background-color: #1e1e1e;
+            color: #858585;
+            text-align: right;
+            padding: 10px 5px;
+            border-right: 1px solid #333;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            user-select: none;
+        }
+
+        textarea.code-editor {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            flex: 1;
+            border: none;
+            padding: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            resize: none;
+            tab-size: 4;
+            outline: none;
+            line-height: 1.5;
+            white-space: pre;
+        }
+
+        .stacks-container {
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem;
+        }
+
+        .stacks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stacks-list {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stack-item {
+            background-color: var(--gray);
+            padding: 1rem;
+            border-radius: 6px;
+            width: 200px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .stack-item:hover {
+            transform: translateY(-3px);
+            background-color: var(--light-gray);
+        }
+
+        .stack-item h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .stack-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .stack-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px;
+        }
+
+        .empty-stacks {
+            padding: 2rem;
+            text-align: center;
+            color: #777;
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            color: #777;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--gray);
+        }
+
+        /* Copilot Modal */
+        .copilot-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--dark);
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 80vh;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .copilot-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copilot-header h3 {
+            font-size: 1.2rem;
+            color: var(--secondary);
+        }
+
+        .copilot-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .copilot-chat {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            max-width: 90%;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: var(--gray);
+        }
+
+        .ai-message code {
+            background-color: #1e1e1e;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            display: block;
+            margin: 5px 0;
+        }
+
+        .copilot-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--gray);
+        }
+
+        .copilot-input input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--gray);
+            border-radius: 4px 0 0 4px;
+            background-color: var(--darker);
+            color: white;
+            outline: none;
+        }
+
+        .copilot-input button {
+            padding: 0 1.2rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+
+        .insert-code-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .editor-container {
+                min-width: 100%;
+            }
+            
+            .controls {
+                gap: 8px;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-code"></i>
+            <h1>STACK code</h1>
+            <img src="./stack-bold (1).svg" alt="">
+        </div>
+        <div class="controls">
+            <button class="btn btn-info" id="infoBtn">
+                <i class="fas fa-layer-group"></i> What am I
+                <div class="info-message">
+                    I don't run code, I am STACK code, I store your codes
+                </div>
+            </button>
+            <button class="btn btn-copilot" id="copilotBtn">
+                <i class="fas fa-robot"></i> Copilot
+            </button>
+            <button class="btn btn-save" id="saveBtn">
+                <i class="fas fa-save"></i> Save Stack
+            </button>
+            <button class="btn btn-new" id="newBtn">
+                <i class="fas fa-file"></i> New Stack
+            </button>
+        </div>
+    </header>
+
+    <!-- Copilot Chat Modal -->
+    <div class="copilot-container" id="copilotContainer">
+        <div class="copilot-header">
+            <h3>STACK Copilot</h3>
+            <button class="copilot-close" id="copilotClose">&times;</button>
+        </div>
+        <div class="copilot-chat" id="copilotChat">
+            <div class="message ai-message">
+                Hello! I'm your AI coding assistant. I can:
+                - Help debug your code
+                - Suggest improvements
+                - Write code snippets
+                - Explain concepts
+                
+                Ask me anything about your code!
+            </div>
+        </div>
+        <div class="copilot-input">
+            <input type="text" id="copilotInput" placeholder="Ask me anything about coding...">
+            <button id="copilotSend"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2><i class="fab fa-html5"></i> HTML</h2>
+            </div>
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="htmlLineNumbers">1</div>
+                <textarea id="htmlEditor" class="code-editor" placeholder="Write your HTML here..." spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2><i class="fab fa-css3-alt"></i> CSS</h2>
+            </div>
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="cssLineNumbers">1</div>
+                <textarea id="cssEditor" class="code-editor" placeholder="Write your CSS here..." spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-header">
+                <h2><i class="fab fa-js"></i> JavaScript</h2>
+            </div>
+            <div class="editor-wrapper">
+                <div class="line-numbers" id="jsLineNumbers">1</div>
+                <textarea id="jsEditor" class="code-editor" placeholder="Write your JavaScript here..." spellcheck="false"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="stacks-container">
+        <div class="stacks-header">
+            <h2><i class="fas fa-layer-group"></i> Saved Stacks</h2>
+            <button class="btn btn-delete" id="clearAllBtn">
+                <i class="fas fa-trash"></i> Clear All
+            </button>
+        </div>
+        <div class="stacks-list" id="stacksList">
+            <div class="empty-stacks">No saved stacks yet</div>
+        </div>
+    </div>
+
+    <footer>
+        STACK Code Editor &copy; <span id="currentYear"></span>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const htmlEditor = document.getElementById('htmlEditor');
+            const cssEditor = document.getElementById('cssEditor');
+            const jsEditor = document.getElementById('jsEditor');
+            const htmlLineNumbers = document.getElementById('htmlLineNumbers');
+            const cssLineNumbers = document.getElementById('cssLineNumbers');
+            const jsLineNumbers = document.getElementById('jsLineNumbers');
+            const stacksList = document.getElementById('stacksList');
+            const saveBtn = document.getElementById('saveBtn');
+            const newBtn = document.getElementById('newBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const infoBtn = document.getElementById('infoBtn');
+            const currentYear = document.getElementById('currentYear');
+            
+            // Copilot elements
+            const copilotBtn = document.getElementById('copilotBtn');
+            const copilotContainer = document.getElementById('copilotContainer');
+            const copilotClose = document.getElementById('copilotClose');
+            const copilotChat = document.getElementById('copilotChat');
+            const copilotInput = document.getElementById('copilotInput');
+            const copilotSend = document.getElementById('copilotSend');
+
+            // Initialize
+            currentYear.textContent = new Date().getFullYear();
+            let stacks = JSON.parse(localStorage.getItem('stacks')) || [];
+            let currentStackId = null;
+            const emptyStacksMessage = document.querySelector('.empty-stacks');
+
+            // Line numbers functionality
+            function updateLineNumbers(editor, lineNumbersElement) {
+                const lines = editor.value.split('\n');
+                lineNumbersElement.innerHTML = '';
+                for (let i = 0; i < lines.length; i++) {
+                    lineNumbersElement.innerHTML += (i + 1) + '<br>';
+                }
+                // Add extra line if needed
+                if (lines.length < 20) {
+                    for (let i = lines.length; i < 20; i++) {
+                        lineNumbersElement.innerHTML += (i + 1) + '<br>';
+                    }
+                }
+            }
+
+            function setupLineNumbers(editor, lineNumbersElement) {
+                updateLineNumbers(editor, lineNumbersElement);
+                editor.addEventListener('input', () => updateLineNumbers(editor, lineNumbersElement));
+                editor.addEventListener('scroll', () => {
+                    lineNumbersElement.scrollTop = editor.scrollTop;
+                });
+            }
+
+            // Initialize line numbers
+            setupLineNumbers(htmlEditor, htmlLineNumbers);
+            setupLineNumbers(cssEditor, cssLineNumbers);
+            setupLineNumbers(jsEditor, jsLineNumbers);
+
+            // Stack management functions
+            function renderStacks() {
+                stacksList.innerHTML = '';
+                if (stacks.length === 0) {
+                    emptyStacksMessage.style.display = 'block';
+                    return;
+                }
+                emptyStacksMessage.style.display = 'none';
+                stacks.forEach((stack, index) => {
+                    const stackItem = document.createElement('div');
+                    stackItem.className = 'stack-item';
+                    stackItem.innerHTML = `
+                        <h3>${stack.name || `Stack #${stack.id?.slice(-4) || index + 1}`}</h3>
+                        <p><small>${stack.date || 'No date'}</small></p>
+                        <div class="stack-actions">
+                            <button class="stack-btn" onclick="loadStack(${index})"><i class="fas fa-edit"></i></button>
+                            <button class="stack-btn" onclick="deleteStack(${index})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    stacksList.appendChild(stackItem);
+                });
+            }
+
+            function loadStack(index) {
+                const stack = stacks[index];
+                if (stack) {
+                    htmlEditor.value = stack.html || '';
+                    cssEditor.value = stack.css || '';
+                    jsEditor.value = stack.js || '';
+                    currentStackId = index;
+                    updateLineNumbers(htmlEditor, htmlLineNumbers);
+                    updateLineNumbers(cssEditor, cssLineNumbers);
+                    updateLineNumbers(jsEditor, jsLineNumbers);
+                }
+            }
+
+            function deleteStack(index) {
+                if (confirm('Delete this stack?')) {
+                    stacks.splice(index, 1);
+                    localStorage.setItem('stacks', JSON.stringify(stacks));
+                    renderStacks();
+                }
+            }
+
+            function clearAllStacks() {
+                if (stacks.length === 0) return;
+                if (confirm('Delete ALL stacks permanently?')) {
+                    stacks = [];
+                    localStorage.removeItem('stacks');
+                    renderStacks();
+                }
+            }
+
+            function saveStack() {
+                const name = prompt('Name this stack:') || `Stack ${stacks.length + 1}`;
+                if (name === null) return;
+
+                const stack = {
+                    id: Date.now().toString(),
+                    name,
+                    html: htmlEditor.value,
+                    css: cssEditor.value,
+                    js: jsEditor.value,
+                    date: new Date().toLocaleString()
+                };
+
+                if (currentStackId !== null) {
+                    stacks[currentStackId] = stack; // Update existing
+                } else {
+                    stacks.push(stack); // Add new
+                }
+
+                localStorage.setItem('stacks', JSON.stringify(stacks));
+                renderStacks();
+            }
+
+            // Copilot functions
+            function toggleCopilot() {
+                copilotContainer.style.display = copilotContainer.style.display === 'flex' ? 'none' : 'flex';
+                if (copilotContainer.style.display === 'flex') {
+                    copilotInput.focus();
+                }
+            }
+
+            function addMessage(text, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+                
+                // Format code blocks in responses
+                const formattedText = text.replace(/```([\s\S]*?)```/g, '<code>$1</code>');
+                messageDiv.innerHTML = formattedText;
+                
+                copilotChat.appendChild(messageDiv);
+                copilotChat.scrollTop = copilotChat.scrollHeight;
+            }
+
+            function insertCodeIntoEditor(code, language) {
+                let editor;
+                switch(language.toLowerCase()) {
+                    case 'html': editor = htmlEditor; break;
+                    case 'css': editor = cssEditor; break;
+                    case 'javascript': editor = jsEditor; break;
+                    default: return;
+                }
+                
+                const currentPos = editor.selectionStart;
+                const currentValue = editor.value;
+                const newValue = currentValue.substring(0, currentPos) + code + currentValue.substring(currentPos);
+                editor.value = newValue;
+                
+                // Update line numbers
+                if (language === 'html') updateLineNumbers(htmlEditor, htmlLineNumbers);
+                if (language === 'css') updateLineNumbers(cssEditor, cssLineNumbers);
+                if (language === 'javascript') updateLineNumbers(jsEditor, jsLineNumbers);
+                
+                // Focus the editor
+                editor.focus();
+            }
+
+            function createInsertButton(code, language) {
+                const button = document.createElement('button');
+                button.className = 'insert-code-btn';
+                button.textContent = `Insert ${language} code`;
+                button.onclick = () => insertCodeIntoEditor(code, language);
+                return button;
+            }
+
+            // Enhanced AI responses with code generation
+            function handleCopilotQuery() {
+                const query = copilotInput.value.trim();
+                if (!query) return;
+                
+                addMessage(query, true);
+                copilotInput.value = '';
+                
+                // Get current code from editors
+                const htmlCode = htmlEditor.value;
+                const cssCode = cssEditor.value;
+                const jsCode = jsEditor.value;
+                
+                // Analyze the query and code to provide better responses
+                setTimeout(() => {
+                    let response = "";
+                    let codeToInsert = "";
+                    let codeLanguage = "";
+                    
+                    // Check for code generation requests
+                    if (query.toLowerCase().includes("create") || query.toLowerCase().includes("show me") || 
+                        query.toLowerCase().includes("write") || query.toLowerCase().includes("example")) {
+                        
+                        if (query.toLowerCase().includes("html")) {
+                            codeLanguage = "html";
+                            if (query.toLowerCase().includes("button")) {
+                                codeToInsert = `<button id="myButton">Click me</button>`;
+                                response = "Here's a simple HTML button:\n```html\n<button id=\"myButton\">Click me</button>\n```\nYou can add event listeners in JavaScript to make it interactive.";
+                            }
+                            else if (query.toLowerCase().includes("form")) {
+                                codeToInsert = `<form>\n  <label for="name">Name:</label>\n  <input type="text" id="name" name="name">\n  <button type="submit">Submit</button>\n</form>`;
+                                response = "Here's a basic HTML form:\n```html\n<form>\n  <label for=\"name\">Name:</label>\n  <input type=\"text\" id=\"name\" name=\"name\">\n  <button type=\"submit\">Submit</button>\n</form>\n```";
+                            }
+                            else {
+                                codeToInsert = `<div class="container">\n  <h1>Hello World</h1>\n  <p>This is a basic HTML structure.</p>\n</div>`;
+                                response = "Here's a basic HTML structure:\n```html\n<div class=\"container\">\n  <h1>Hello World</h1>\n  <p>This is a basic HTML structure.</p>\n</div>\n```";
+                            }
+                        }
+                        else if (query.toLowerCase().includes("css")) {
+                            codeLanguage = "css";
+                            if (query.toLowerCase().includes("center")) {
+                                codeToInsert = `.centered {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 100vh;\n}`;
+                                response = "To center elements with CSS:\n```css\n.centered {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 100vh;\n}\n```";
+                            }
+                            else if (query.toLowerCase().includes("animation")) {
+                                codeToInsert = `@keyframes fadeIn {\n  from { opacity: 0; }\n  to { opacity: 1; }\n}\n\n.element {\n  animation: fadeIn 1s ease-in;\n}`;
+                                response = "CSS fade-in animation:\n```css\n@keyframes fadeIn {\n  from { opacity: 0; }\n  to { opacity: 1; }\n}\n\n.element {\n  animation: fadeIn 1s ease-in;\n}\n```";
+                            }
+                            else {
+                                codeToInsert = `body {\n  font-family: Arial, sans-serif;\n  margin: 0;\n  padding: 0;\n  background-color: #f4f4f4;\n}`;
+                                response = "Basic CSS reset:\n```css\nbody {\n  font-family: Arial, sans-serif;\n  margin: 0;\n  padding: 0;\n  background-color: #f4f4f4;\n}\n```";
+                            }
+                        }
+                        else if (query.toLowerCase().includes("javascript") || query.toLowerCase().includes("js")) {
+                            codeLanguage = "javascript";
+                            if (query.toLowerCase().includes("event listener")) {
+                                codeToInsert = `document.getElementById('myButton').addEventListener('click', () => {\n  console.log('Button clicked!');\n});`;
+                                response = "JavaScript event listener:\n```javascript\ndocument.getElementById('myButton').addEventListener('click', () => {\n  console.log('Button clicked!');\n});\n```";
+                            }
+                            else if (query.toLowerCase().includes("fetch")) {
+                                codeToInsert = `fetch('https://api.example.com/data')\n  .then(response => response.json())\n  .then(data => console.log(data))\n  .catch(error => console.error('Error:', error));`;
+                                response = "Fetch API example:\n```javascript\nfetch('https://api.example.com/data')\n  .then(response => response.json())\n  .then(data => console.log(data))\n  .catch(error => console.error('Error:', error));\n```";
+                            }
+                            else {
+                                codeToInsert = `function greet(name) {\n  return \`Hello, \${name}!\`;\n}\n\nconsole.log(greet('World'));`;
+                                response = "Simple JavaScript function:\n```javascript\nfunction greet(name) {\n  return \`Hello, \${name}!\`;\n}\n\nconsole.log(greet('World'));\n```";
+                            }
+                        }
+                    }
+                    // Check for debugging help
+                    else if (query.toLowerCase().includes("error") || query.toLowerCase().includes("not working")) {
+                        response = analyzeCodeErrors(htmlCode, cssCode, jsCode);
+                    }
+                    // Check for optimization requests
+                    else if (query.toLowerCase().includes("optimize") || query.toLowerCase().includes("improve")) {
+                        response = suggestOptimizations(htmlCode, cssCode, jsCode);
+                    }
+                    // General coding questions
+                    else {
+                        response = getGeneralCodingResponse(query, htmlCode, cssCode, jsCode);
+                    }
+                    
+                    // Add the response to chat
+                    addMessage(response, false);
+                    
+                    // Add insert button if we have code to insert
+                    if (codeToInsert) {
+                        const button = createInsertButton(codeToInsert, codeLanguage);
+                        copilotChat.appendChild(button);
+                        copilotChat.scrollTop = copilotChat.scrollHeight;
+                    }
+                }, 800); // Simulate AI processing time
+            }
+
+            // AI Helper functions
+            function analyzeCodeErrors(html, css, js) {
+                const errors = [];
+                
+                // HTML checks
+                if (html) {
+                    if (!html.includes("<!DOCTYPE html>")) {
+                        errors.push("Missing DOCTYPE declaration in HTML");
+                    }
+                    if ((html.match(/<div/g) || []).length > 10) {
+                        errors.push("Consider using semantic HTML elements instead of many divs");
+                    }
+                    if (html.includes("<br>") && !html.includes("<br />")) {
+                        errors.push("Consider using self-closing tags <br /> for XHTML compatibility");
+                    }
+                }
+                
+                // CSS checks
+                if (css) {
+                    if (css.includes("!important")) {
+                        errors.push("Avoid using !important in CSS - it leads to specificity issues");
+                    }
+                    if ((css.match(/px/g) || []).length > 5) {
+                        errors.push("Consider using relative units (em/rem) instead of px for better responsiveness");
+                    }
+                    if (css.includes("* {")) {
+                        errors.push("Avoid using the universal selector (*) for better performance");
+                    }
+                }
+                
+                // JavaScript checks
+                if (js) {
+                    if (js.includes("var ")) {
+                        errors.push("Consider using const/let instead of var for better scoping");
+                    }
+                    if (js.includes("==")) {
+                        errors.push("Prefer === over == for strict equality checks");
+                    }
+                    if (js.includes("innerHTML") && !js.includes("textContent")) {
+                        errors.push("Consider textContent instead of innerHTML when possible for security");
+                    }
+                    if (js.includes("document.write")) {
+                        errors.push("Avoid using document.write() as it can break your page");
+                    }
+                }
+                
+                if (errors.length > 0) {
+                    return "Potential issues found:\n- " + errors.join("\n- ") + 
+                           "\n\nRecommendations:\n1. Validate your HTML\n2. Check browser console for errors\n3. Test responsive behavior";
+                }
+                
+                return "No obvious errors detected. Try:\n1. Checking browser console for errors\n2. Validating your code structure\n3. Testing with different inputs";
+            }
+
+            function suggestOptimizations(html, css, js) {
+                const suggestions = [];
+                
+                if (html) {
+                    const divCount = (html.match(/<div/g) || []).length;
+                    if (divCount > 8) {
+                        suggestions.push(`Consider reducing div nesting (currently ${divCount} div elements)`);
+                    }
+                    if (html.includes("style=")) {
+                        suggestions.push("Move inline styles to CSS for better maintainability");
+                    }
+                }
+                
+                if (css) {
+                    if (css.includes("@import")) {
+                        suggestions.push("Replace @import with <link> for better performance");
+                    }
+                    if (!css.includes("min-width") && !css.includes("max-width")) {
+                        suggestions.push("Consider adding responsive breakpoints if not present");
+                    }
+                    if ((css.match(/\./g) || []).length > 20) {
+                        suggestions.push("Consider using CSS methodologies like BEM for better organization");
+                    }
+                }
+                
+                if (js) {
+                    if (js.includes("document.querySelector") && js.includes("for loop")) {
+                        suggestions.push("Consider caching selectors outside loops for better performance");
+                    }
+                    if (js.includes("setTimeout") && !js.includes("clearTimeout")) {
+                        suggestions.push("Remember to clean up timeouts with clearTimeout");
+                    }
+                    if (js.includes("forEach") && js.includes("return")) {
+                        suggestions.push("Note: return in forEach doesn't break the loop - consider using for...of");
+                    }
+                }
+                
+                if (suggestions.length > 0) {
+                    return "Optimization suggestions:\n- " + suggestions.join("\n- ");
+                }
+                
+                return "Code looks clean! For further optimization:\n1. Minify assets\n2. Implement lazy loading\n3. Consider code splitting\n4. Audit with Lighthouse";
+            }
+
+            function getGeneralCodingResponse(query, html, css, js) {
+                const codingTips = [
+                    "Remember to keep your code DRY (Don't Repeat Yourself)",
+                    "Always add comments for complex logic",
+                    "Test your code in multiple browsers",
+                    "Implement error handling for robustness",
+                    "Follow consistent naming conventions",
+                    "Break down complex problems into smaller functions",
+                    "Version control is your friend - commit often",
+                    "Use semantic HTML for better accessibility",
+                    "Organize your CSS with a methodology like BEM",
+                    "Always validate user input for security"
+                ];
+                
+                const languageSpecificTips = [];
+                
+                if (html) {
+                    languageSpecificTips.push(
+                        "HTML: Use semantic elements like <header>, <main>, <section>",
+                        "HTML: Always include alt text for images",
+                        "HTML: Validate your markup with validator.w3.org"
+                    );
+                }
+                
+                if (css) {
+                    languageSpecificTips.push(
+                        "CSS: Use CSS variables for theming",
+                        "CSS: Consider mobile-first design approach",
+                        "CSS: Use flexbox/grid for modern layouts"
+                    );
+                }
+                
+                if (js) {
+                    languageSpecificTips.push(
+                        "JavaScript: Use const/let instead of var",
+                        "JavaScript: Handle promises properly with async/await",
+                        "JavaScript: Use modules to organize your code"
+                    );
+                }
+                
+                const randomTip = codingTips[Math.floor(Math.random() * codingTips.length)];
+                const randomLanguageTip = languageSpecificTips.length > 0 ? 
+                    languageSpecificTips[Math.floor(Math.random() * languageSpecificTips.length)] : "";
+                
+                return `Regarding "${query}":\n\nGeneral tip: ${randomTip}\n${randomLanguageTip ? `\n${randomLanguageTip}` : ''}\n\nAsk me to create specific code examples if you need help!`;
+            }
+
+            // Event listeners
+            saveBtn.addEventListener('click', saveStack);
+            newBtn.addEventListener('click', () => {
+                if (!htmlEditor.value && !cssEditor.value && !jsEditor.value) return;
+                if (confirm('Start a new stack? Unsaved changes will be lost.')) {
+                    htmlEditor.value = '';
+                    cssEditor.value = '';
+                    jsEditor.value = '';
+                    currentStackId = null;
+                    updateLineNumbers(htmlEditor, htmlLineNumbers);
+                    updateLineNumbers(cssEditor, cssLineNumbers);
+                    updateLineNumbers(jsEditor, jsLineNumbers);
+                }
+            });
+            clearAllBtn.addEventListener('click', clearAllStacks);
+            
+            // Copilot event listeners
+            copilotBtn.addEventListener('click', toggleCopilot);
+            copilotClose.addEventListener('click', toggleCopilot);
+            copilotSend.addEventListener('click', handleCopilotQuery);
+            copilotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleCopilotQuery();
+                }
+            });
+
+            // Initialize
+            renderStacks();
+            
+            // Global functions
+            window.loadStack = loadStack;
+            window.deleteStack = deleteStack;
+            window.clearAllStacks = clearAllStacks;
+            window.saveStack = saveStack;
+            
+            // Check for saved stacks on load
+            if (stacks.length > 0) {
+                emptyStacksMessage.style.display = 'none';
+            } else {
+                emptyStacksMessage.style.display = 'block';
+            }
+            
+            // Save stacks before unload
+            window.addEventListener('beforeunload', () => {
+                localStorage.setItem('stacks', JSON.stringify(stacks));
+            });
+            
+            // Handle storage events
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'stacks') {
+                    stacks = JSON.parse(event.newValue);
+                    renderStacks();
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (event) => {
+                if (event.ctrlKey && event.key === 's') {
+                    event.preventDefault();
+                    saveStack();
+                }
+                if (event.ctrlKey && event.key === 'n') {
+                    event.preventDefault();
+                    newBtn.click();
+                }
+                if (event.ctrlKey && event.key === 'd') {
+                    event.preventDefault();
+                    clearAllBtn.click();
+                }
+                if (event.ctrlKey && event.key === '/') {
+                    event.preventDefault();
+                    copilotBtn.click();
+                    copilotInput.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
